@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spell Bee Practice App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100">
+    <div class="p-6">
+        <div class="max-w-4xl mx-auto">
+            <div id="apiSetup" class="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-2xl p-6 mb-6 shadow-lg">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-yellow-900 text-xl mb-3 flex items-center gap-2">
+                            <span class="text-2xl">🔑</span> Setup: Merriam-Webster API Key
+                        </h3>
+                        <ol class="text-sm text-yellow-800 space-y-2 mb-4">
+                            <li><strong>1.</strong> Visit <a href="https://dictionaryapi.com/" target="_blank" class="underline text-blue-600">dictionaryapi.com</a></li>
+                            <li><strong>2.</strong> Create a free account</li>
+                            <li><strong>3.</strong> Request a key for "Collegiate Dictionary"</li>
+                            <li><strong>4.</strong> For application URL use your GitHub Pages URL</li>
+                            <li><strong>5.</strong> Paste your API key below</li>
+                        </ol>
+                        <div class="flex gap-2">
+                            <input type="text" id="apiKeyInput" placeholder="Paste your API key here" class="flex-1 px-4 py-3 border-2 border-yellow-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent shadow-sm"/>
+                            <button id="saveKeyBtn" class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-3 rounded-xl font-bold hover:from-yellow-600 hover:to-orange-600 shadow-lg transform hover:scale-105 transition">Save Key</button>
+                        </div>
+                        <button id="skipBtn" class="mt-3 text-sm text-yellow-800 underline hover:text-yellow-900 font-medium">Skip for now (pronunciation only)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="apiStatus" class="hidden bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-xl p-4 mb-6 flex justify-between items-center shadow-md">
+                <span class="text-green-800 text-sm font-semibold flex items-center gap-2">
+                    <span class="text-xl">✓</span> API Key configured
+                </span>
+                <button id="changeKeyBtn" class="text-green-700 text-sm underline hover:text-green-800 font-medium">Change Key</button>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-2xl p-8 border-4 border-transparent bg-clip-padding" style="background-image: linear-gradient(white, white), linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-origin: border-box; background-clip: padding-box, border-box;">
+                <h1 class="text-5xl font-extrabold text-center bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent mb-3">
+                    🐝 Spell Bee Practice
+                </h1>
+                <p class="text-center text-gray-600 mb-8 text-lg font-medium">
+                    Powered by Merriam-Webster Dictionary
+                </p>
+
+                <div id="inputSection" class="space-y-6">
+                    <div class="border-3 border-dashed border-purple-400 rounded-2xl p-10 text-center hover:border-purple-600 transition-all bg-gradient-to-br from-purple-50 to-pink-50 shadow-inner">
+                        <input type="file" accept=".txt" id="fileUpload" class="hidden"/>
+                        <label for="fileUpload" class="cursor-pointer block">
+                            <svg class="w-16 h-16 mx-auto text-purple-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p class="text-xl font-bold text-gray-800">Upload a text file with words</p>
+                            <p class="text-sm text-gray-600 mt-3">Words separated by new lines or commas</p>
+                        </label>
+                    </div>
+                    <div class="text-center text-gray-500 font-bold text-lg">OR</div>
+                    <div>
+                        <textarea id="wordInput" placeholder="Paste words here (one per line or comma-separated)&#10;&#10;Try these:&#10;accommodate, rhythm, conscience, embarrass, maintenance" class="w-full h-48 p-5 border-3 border-purple-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-transparent shadow-lg text-lg"></textarea>
+                        <button id="loadWordsBtn" class="mt-4 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-2xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 shadow-xl transform hover:scale-105 transition">
+                            <span class="text-2xl mr-2">🚀</span> Load Words
+                        </button>
+                    </div>
+                </div>
+
+                <div id="practiceSection" class="hidden space-y-6">
+                    <div class="flex justify-between items-center bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-2xl shadow-md border-2 border-purple-200">
+                        <div class="flex items-center gap-3">
+                            <span id="progressText" class="text-lg font-bold text-purple-700">Word 1 of 10</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-semibold text-gray-600">Go to:</span>
+                                <input type="number" id="wordNumberInput" min="1" placeholder="#" class="w-16 px-2 py-1 border-2 border-purple-300 rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:ring-purple-400"/>
+                                <button id="goToWordBtn" class="bg-purple-600 text-white px-3 py-1 rounded-lg font-bold hover:bg-purple-700 transition text-sm">Go</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span id="timerDisplay" class="text-2xl font-extrabold text-pink-600 bg-white px-4 py-2 rounded-xl shadow-md">⏱️ 0:00</span>
+                            <button id="clearListBtn" class="text-red-600 hover:text-red-700 font-bold bg-red-50 px-4 py-2 rounded-xl hover:bg-red-100 transition">🗑️ Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 rounded-3xl p-10 text-white text-center shadow-2xl border-4 border-white" style="min-height: 350px; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="flex gap-4 justify-center mb-8">
+                            <button id="speakBtn" class="bg-white text-purple-600 rounded-2xl p-6 transition-all hover:scale-110 shadow-2xl hover:shadow-purple-500/50 transform" style="width: fit-content;">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                                </svg>
+                            </button>
+                            <button id="speakSlowBtn" class="bg-white text-pink-600 rounded-2xl p-6 transition-all hover:scale-110 shadow-2xl hover:shadow-pink-500/50 transform" style="width: fit-content;">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </button>
+                            <button id="speakExtraSlowBtn" class="bg-white text-blue-600 rounded-2xl p-6 transition-all hover:scale-110 shadow-2xl hover:shadow-blue-500/50 transform" style="width: fit-content;">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex gap-4 justify-center mb-6 text-sm font-bold">
+                            <span class="bg-purple-500 px-3 py-1 rounded-full">Normal</span>
+                            <span class="bg-pink-500 px-3 py-1 rounded-full">Slow</span>
+                            <span class="bg-blue-500 px-3 py-1 rounded-full">Extra Slow</span>
+                        </div>
+                        <div id="wordDisplay">
+                            <button id="showWordBtn" class="text-2xl underline hover:text-yellow-200 font-bold bg-white/20 px-8 py-3 rounded-2xl hover:bg-white/30 transition">Show Word</button>
+                        </div>
+                    </div>
+
+                    <div id="meaningBox" class="hidden rounded-lg p-6 bg-gray-50">
+                        <div id="partOfSpeech" class="text-sm text-indigo-600 font-semibold mb-2"></div>
+                        <p id="definition" class="text-lg text-gray-700"></p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="showMeaningBtn" class="col-span-2 bg-indigo-100 text-indigo-700 py-3 rounded-lg font-medium hover:bg-indigo-200">Show Meaning</button>
+                        <button id="nextBtn" class="bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700">Next Word</button>
+                        <button id="resetBtn" class="bg-orange-600 text-white py-3 rounded-lg font-medium hover:bg-orange-700">Start Over</button>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm text-blue-800"><strong>Tips:</strong> Listen to the pronunciation, try to spell it, then reveal the word to check!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var words = [];
+        var currentIndex = 0;
+        var meanings = {};
+        var apiKey = localStorage.getItem('mw_api_key') || '';
+        var timerInterval = null;
+        var elapsedSeconds = 0;
+
+        var elements = {
+            apiSetup: document.getElementById('apiSetup'),
+            apiStatus: document.getElementById('apiStatus'),
+            apiKeyInput: document.getElementById('apiKeyInput'),
+            saveKeyBtn: document.getElementById('saveKeyBtn'),
+            changeKeyBtn: document.getElementById('changeKeyBtn'),
+            skipBtn: document.getElementById('skipBtn'),
+            inputSection: document.getElementById('inputSection'),
+            practiceSection: document.getElementById('practiceSection'),
+            fileUpload: document.getElementById('fileUpload'),
+            wordInput: document.getElementById('wordInput'),
+            loadWordsBtn: document.getElementById('loadWordsBtn'),
+            progressText: document.getElementById('progressText'),
+            timerDisplay: document.getElementById('timerDisplay'),
+            wordNumberInput: document.getElementById('wordNumberInput'),
+            goToWordBtn: document.getElementById('goToWordBtn'),
+            clearListBtn: document.getElementById('clearListBtn'),
+            speakBtn: document.getElementById('speakBtn'),
+            speakSlowBtn: document.getElementById('speakSlowBtn'),
+            speakExtraSlowBtn: document.getElementById('speakExtraSlowBtn'),
+            wordDisplay: document.getElementById('wordDisplay'),
+            meaningBox: document.getElementById('meaningBox'),
+            partOfSpeech: document.getElementById('partOfSpeech'),
+            definition: document.getElementById('definition'),
+            showMeaningBtn: document.getElementById('showMeaningBtn'),
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            resetBtn: document.getElementById('resetBtn')
+        };
+
+        if (apiKey) {
+            elements.apiSetup.classList.add('hidden');
+            elements.apiStatus.classList.remove('hidden');
+        }
+
+        elements.saveKeyBtn.addEventListener('click', function() {
+            var key = elements.apiKeyInput.value.trim();
+            if (key) {
+                apiKey = key;
+                localStorage.setItem('mw_api_key', key);
+                elements.apiSetup.classList.add('hidden');
+                elements.apiStatus.classList.remove('hidden');
+            }
+        });
+
+        elements.skipBtn.addEventListener('click', function() {
+            elements.apiSetup.classList.add('hidden');
+        });
+
+        elements.changeKeyBtn.addEventListener('click', function() {
+            elements.apiStatus.classList.add('hidden');
+            elements.apiSetup.classList.remove('hidden');
+            elements.apiKeyInput.value = apiKey;
+        });
+
+        elements.fileUpload.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    loadWords(event.target.result);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        elements.loadWordsBtn.addEventListener('click', function() {
+            var text = elements.wordInput.value;
+            if (text.trim()) {
+                loadWords(text);
+                elements.wordInput.value = '';
+            }
+        });
+
+        function loadWords(text) {
+            words = text.split(/[\n,]/).map(function(w) { return w.trim(); }).filter(function(w) { return w.length > 0; });
+            if (words.length > 0) {
+                currentIndex = 0;
+                meanings = {};
+                elements.inputSection.classList.add('hidden');
+                elements.practiceSection.classList.remove('hidden');
+                updateDisplay();
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            elapsedSeconds = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(function() {
+                elapsedSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            var minutes = Math.floor(elapsedSeconds / 60);
+            var seconds = elapsedSeconds % 60;
+            elements.timerDisplay.textContent = '⏱️ ' + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+        }
+
+        function updateDisplay() {
+            elements.progressText.textContent = 'Word ' + (currentIndex + 1) + ' of ' + words.length;
+            elements.wordDisplay.innerHTML = '<button id="showWordBtn" class="text-xl underline hover:text-indigo-200">Show Word</button>';
+            elements.meaningBox.classList.add('hidden');
+            elements.showMeaningBtn.classList.remove('hidden');
+            elements.showMeaningBtn.disabled = false;
+            elements.showMeaningBtn.textContent = 'Show Meaning';
+            elements.nextBtn.disabled = currentIndex >= words.length - 1;
+            
+            document.getElementById('showWordBtn').addEventListener('click', showWord);
+            
+            startTimer();
+        }
+
+        function showWord() {
+            var word = words[currentIndex];
+            elements.wordDisplay.innerHTML = '<div class="space-y-4"><h2 class="text-6xl font-black tracking-wide drop-shadow-lg animate-pulse">' + word + '</h2></div>';
+        }
+
+        function speakWord(word, rate) {
+            rate = rate || 0.8;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                var utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = rate;
+                utterance.pitch = 1;
+                
+                var voices = window.speechSynthesis.getVoices();
+                var usVoice = voices.find(function(voice) {
+                    return voice.lang === 'en-US' || voice.lang.startsWith('en-US');
+                });
+                
+                if (usVoice) {
+                    utterance.voice = usVoice;
+                }
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function fetchMeaning(word) {
+            if (meanings[word]) {
+                displayMeaning(word);
+                return;
+            }
+
+            if (!apiKey) {
+                meanings[word] = {
+                    partOfSpeech: '',
+                    definition: 'Please enter your Merriam-Webster API key to see definitions'
+                };
+                displayMeaning(word);
+                return;
+            }
+
+            elements.showMeaningBtn.textContent = 'Loading...';
+            elements.showMeaningBtn.disabled = true;
+
+            fetch('https://www.dictionaryapi.com/api/v3/references/collegiate/json/' + word + '?key=' + apiKey)
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
+                        var entry = data[0];
+                        meanings[word] = {
+                            partOfSpeech: entry.fl || '',
+                            definition: (entry.shortdef && entry.shortdef[0]) || 'Definition not found'
+                        };
+                    } else {
+                        meanings[word] = {
+                            partOfSpeech: '',
+                            definition: 'Word not found in dictionary'
+                        };
+                    }
+                    displayMeaning(word);
+                    elements.showMeaningBtn.classList.add('hidden');
+                })
+                .catch(function(error) {
+                    meanings[word] = {
+                        partOfSpeech: '',
+                        definition: 'Error: ' + error.message
+                    };
+                    displayMeaning(word);
+                    elements.showMeaningBtn.classList.add('hidden');
+                });
+        }
+
+        function displayMeaning(word) {
+            var meaning = meanings[word];
+            elements.partOfSpeech.textContent = meaning.partOfSpeech;
+            elements.definition.textContent = meaning.definition;
+            elements.meaningBox.classList.remove('hidden');
+            
+            var textToSpeak = '';
+            if (meaning.partOfSpeech) {
+                textToSpeak = meaning.partOfSpeech + '. ';
+            }
+            textToSpeak += meaning.definition;
+            
+            speakWord(textToSpeak, 0.5);
+        }
+
+        elements.speakBtn.addEventListener('click', function() {
+            speakWord(words[currentIndex]);
+        });
+
+        elements.speakSlowBtn.addEventListener('click', function() {
+            speakWord(words[currentIndex], 0.2);
+        });
+
+        elements.speakExtraSlowBtn.addEventListener('click', function() {
+            speakWord(words[currentIndex], 0.005);
+        });
+
+        elements.showMeaningBtn.addEventListener('click', function() {
+            fetchMeaning(words[currentIndex]);
+        });
+
+        elements.goToWordBtn.addEventListener('click', function() {
+            var wordNum = parseInt(elements.wordNumberInput.value);
+            if (wordNum && wordNum >= 1 && wordNum <= words.length) {
+                currentIndex = wordNum - 1;
+                updateDisplay();
+            }
+        });
+
+        elements.wordNumberInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                elements.goToWordBtn.click();
+            }
+        });
+
+        elements.prevBtn.addEventListener('click', function() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateDisplay();
+            }
+        });
+        
+        elements.nextBtn.addEventListener('click', function() {
+            if (currentIndex < words.length - 1) {
+                currentIndex++;
+                updateDisplay();
+            }
+        });
+
+        elements.resetBtn.addEventListener('click', function() {
+            currentIndex = 0;
+            updateDisplay();
+        });
+
+        elements.clearListBtn.addEventListener('click', function() {
+            words = [];
+            meanings = {};
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            elements.practiceSection.classList.add('hidden');
+            elements.inputSection.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
